@@ -1,3 +1,5 @@
+var mode = false;
+
 function maintenance(app, options) {
 	var mode = false,
 		endpoint = false,
@@ -6,7 +8,9 @@ function maintenance(app, options) {
 		view = 'maintenance.html',
 		api = false,
 		status = 503,
-		message = 'sorry, we are on maintenance';
+		message = 'sorry, we are on maintenance',
+		whitelist = [],
+		hook = false;
 
 	if (typeof options === 'boolean') {
 		mode = options;
@@ -19,8 +23,10 @@ function maintenance(app, options) {
 		api = options.api || api;
 		status = options.status || status;
 		message = options.message || message;
+		whitelist = options.whitelist || whitelist;
+		hook = options.hook || hook;
 	} else {
-		throw new Error('unsuported options');
+		throw new Error('unsupported options');
 	}
 
 	var checkAccess = function (req, res, next) {
@@ -33,57 +39,121 @@ function maintenance(app, options) {
 			return next();
 		}
 
-		res.send(401);
+		res.sendStatus(401);
 	};
 
 	var server = function (app) {
 		if (endpoint) {
 			app.post(url, checkAccess, function (req, res) {
-				mode = true;
-				res.send(200);
+				var message = 'Already in maintenance mode';
+
+				if (!mode) {
+					mode = true;
+					message = 'Maintenance mode enabled';
+				}
+				
+				res.status(200);
+				res.json({
+					maintenance: mode,
+					message: message
+				});
 			});
 
-			app.del(url, checkAccess, function (req, res) {
-				mode = false;
-				res.send(200);
+			app.delete(url, checkAccess, function (req, res) {
+				var message = 'Maintenance mode already disabled'
+
+				if (mode) {
+					mode = false;
+					message = 'Maintenance mode disabled';
+				}
+				
+				res.status(200);
+				res.json({
+					maintenance: mode,
+					message: message
+				});
+			});
+
+			app.get(url, checkAccess, function (req, res) {
+				if (req.query.quit && req.query.quit.toString() === '1') {
+					if (req.session && req.session.maintenance) {
+						delete req.session.maintenance;
+					}
+				}
+
+				res.status(200);
+				res.json({
+					maintenance: mode
+				});
 			});
 		}
 	};
 
 	var handle = function (req, res) {
-		var isApi = api && req.url.indexOf(api) === 0;
+	    var isApi = false;
 
-		res.status(status);
+	    if (api && api instanceof Array) {
+	        api.every(function(item) {
+	            if (req.url.indexOf(item) === 0) {
+	                isApi = true;
+	                return false;
+	            }
 
-		if (isApi) {
-			return res.json({message: message});
-		}
+	            return true;
+	        });
+	    } else {
+	        isApi = api && req.url.indexOf(api) === 0;
+	    }
 
-		return res.render(view);
+	    res.status(status);
+
+	    if (isApi) {
+	        return res.json({message: message});
+	    }
+
+	    return res.sendFile(view);
 	};
 
 	var middleware = function (req, res, next) {
-		if (mode) {
-			return handle(req, res);
-		}
+	    var allowedAccess = req.session && accessKey && req.query.access_key === accessKey;
+	    var isWhitelisted = whitelist.filter(function(item) {
+	        return req.url.indexOf(item) === 0;
+	    }).length;
 
-		next();
+	    if (mode && req.url.indexOf(url) === -1) {
+	        if (allowedAccess) {
+	            if (!req.session.maintenance) {
+	                req.session.maintenance = accessKey;
+	            }
+	        } else {
+	            if (!req.session || !req.session.maintenance) {
+	                if (!isWhitelisted) {
+	                    return handle(req, res);
+	                }
+	            }
+	        }
+	    }
+
+	    next();
+	};
+	
+	var register = function (app) {
+	    try {
+	        if (hook && typeof hook === 'function') {
+	            app.use(hook);
+	        }
+	        app.use(middleware);
+	    } catch (error) {
+	        throw (error);
+	    }
+
+	    return app;
 	};
 
-	var inject = function (app) {
-		for (var verb in app.routes) {
-			var routes = app.routes[verb];
-			routes.forEach(patchRoute);
-		}
-
-		function patchRoute (route) {
-			route.callbacks.splice(0, 0, middleware);
-		}
-
-		return app;
-	};
-
-	return server(inject(app));
+	return server(register(app));
 }
 
 module.exports = maintenance;
+module.exports.getMode = function() {
+    return mode;
+};
