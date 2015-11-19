@@ -60,7 +60,7 @@ function maintenance(app, options) {
             });
 
             app.delete(url, checkAccess, function (req, res) {
-                var message = 'Maintenance mode already disabled'
+                var message = 'Maintenance mode already disabled';
 
                 if (mode) {
                     mode = false;

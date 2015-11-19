@@ -5,15 +5,12 @@ function create(options) {
 	var called = {};
 	var app = express();
 
-	app.configure(function () {
-		app.set('port', process.env.PORT || 3030);
-		app.set('views', __dirname + '/views');
-		app.engine('html', require('ejs').renderFile);
-	});
+	app.set('view engine', 'ejs');
+	app.set('views', __dirname + '/views');
 
 	app.get('/', function (req, res) {
 		called['/'] = true;
-		res.send(200);
+		res.sendStatus(200);
 	});
 
 	app.get('/api/call', function (req, res) {
@@ -23,7 +20,7 @@ function create(options) {
 
 	maintenance(app, options);
 
-	var server = app.listen(app.get('port'));
+	var server = app.listen(process.env.PORT || 3030);
 
 	return {
 		close: function (callback) {
