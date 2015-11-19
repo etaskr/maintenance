@@ -6,7 +6,8 @@ function create(options) {
 	var app = express();
 
 	app.set('view engine', 'ejs');
-	app.set('views', __dirname + '/views');
+
+	maintenance(app, options);
 
 	app.get('/', function (req, res) {
 		called['/'] = true;
@@ -16,9 +17,7 @@ function create(options) {
 	app.get('/api/call', function (req, res) {
 		called['/api/call'] = true;
 		res.json({response: 'response'});
-	});
-
-	maintenance(app, options);
+	});	
 
 	var server = app.listen(process.env.PORT || 3030);
 
