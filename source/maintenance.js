@@ -75,12 +75,6 @@ function maintenance(app, options) {
             });
 
             app.get(url, checkAccess, function (req, res) {
-                if (req.query.quit && req.query.quit.toString() === '1') {
-                    if (req.session && req.session.maintenance) {
-                        delete req.session.maintenance;
-                    }
-                }
-
                 res.status(200);
                 res.json({
                     maintenance: mode
@@ -116,6 +110,7 @@ function maintenance(app, options) {
 
     var middleware = function (req, res, next) {
         var allowedAccess = req.session && accessKey && req.query.access_key === accessKey;
+        var exitAdminPass = req.query.quit && req.query.quit.toString() === '1';
         var isWhitelisted = whitelist.filter(function(item) {
             return req.url.indexOf(item) === 0;
         }).length;
@@ -124,6 +119,13 @@ function maintenance(app, options) {
             if (allowedAccess) {
                 if (!req.session.maintenance) {
                     req.session.maintenance = accessKey;
+                }
+
+                if (exitAdminPass) {
+                    if (req.session && req.session.maintenance) {
+                        delete req.session.maintenance;
+                        return handle(req, res);
+                    }
                 }
             } else {
                 if (!req.session || !req.session.maintenance) {
