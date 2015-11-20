@@ -5,7 +5,8 @@ function create(options) {
 	var called = {};
 	var app = express();
 
-	app.set('view engine', 'ejs');
+	app.set('views', __dirname + '/views');
+	app.engine('html', require('ejs').renderFile);
 
 	maintenance(app, options);
 

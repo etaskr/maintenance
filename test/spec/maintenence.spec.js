@@ -3,8 +3,6 @@ var path = require('path');
 
 describe('maintenance.js', function () {
 	var url, app, response, results;
-	var view = path.join(__dirname, '../app/views/maintenance.html');
-	var view2 = path.join(__dirname, '../app/views/maintenance2.html');
 
 	before(function () {
 		url = 'http://localhost:3030';
@@ -40,7 +38,7 @@ describe('maintenance.js', function () {
 
 	describe('when starting in maintenance mode', function () {
 		before(function () {
-			app = require('../app/app')({current:true, view:view});
+			app = require('../app/app')(true);
 		});
 
 		after(function (done) {
@@ -72,7 +70,7 @@ describe('maintenance.js', function () {
 
 	describe('with enabled endpoint', function () {
 		before(function () {
-			app = require('../app/app')({httpEndpoint: true, view:view});
+			app = require('../app/app')({httpEndpoint: true});
 		});
 
 		after(function (done) {
@@ -137,7 +135,7 @@ describe('maintenance.js', function () {
 
 	describe('with enabled endpoint and custom url', function () {
 		before(function () {
-			app = require('../app/app')({httpEndpoint: true, url: '/my/mt', view:view});
+			app = require('../app/app')({httpEndpoint: true, url: '/my/mt'});
 		});
 
 		after(function (done) {
@@ -187,7 +185,7 @@ describe('maintenance.js', function () {
 
 	describe('with enabled endpoint and access key', function () {
 		before(function () {
-			app = require('../app/app')({httpEndpoint: true, accessKey: 'secret', view:view});
+			app = require('../app/app')({httpEndpoint: true, accessKey: 'secret'});
 		});
 
 		after(function (done) {
@@ -267,7 +265,7 @@ describe('maintenance.js', function () {
 
 	describe('with custom view', function () {
 		before(function () {
-			app = require('../app/app')({current: true, view: view2});
+			app = require('../app/app')({current: true, view: 'maintenance2.html'});
 		});
 
 		after(function (done) {
