@@ -1,16 +1,16 @@
-var mode = false;
+var mode;
 
 function maintenance(app, options) {
-    var mode = false,
-        endpoint = false,
+    var endpoint = false,
         url ='/maintenance',
         accessKey,
         view = 'maintenance.html',
         api = false,
         status = 503,
         message = 'sorry, we are on maintenance',
-        whitelist = [],
-        hook = false;
+        whitelist = [];
+    
+    mode = false;
 
     if (typeof options === 'boolean') {
         mode = options;
@@ -24,7 +24,6 @@ function maintenance(app, options) {
         status = options.status || status;
         message = options.message || message;
         whitelist = options.whitelist || whitelist;
-        hook = options.hook || hook;
     } else {
         throw new Error('unsupported options');
     }
@@ -141,9 +140,6 @@ function maintenance(app, options) {
     
     var register = function (app) {
         try {
-            if (hook && typeof hook === 'function') {
-                app.use(hook);
-            }
             app.use(middleware);
         } catch (error) {
             throw (error);
