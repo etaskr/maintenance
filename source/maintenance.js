@@ -9,6 +9,7 @@ function maintenance(app, options) {
         status = 503,
         message = 'sorry, we are on maintenance',
         whitelist = [];
+        templateData = false;
     
     mode = false;
 
@@ -24,6 +25,7 @@ function maintenance(app, options) {
         status = options.status || status;
         message = options.message || message;
         whitelist = options.whitelist || whitelist;
+        templateData = options.templateData || templateData;
     } else {
         throw new Error('unsupported options');
     }
@@ -102,6 +104,10 @@ function maintenance(app, options) {
 
         if (isApi) {
             return res.json({message: message});
+        }
+
+        if (templateData) {
+            return res.render(view, templateData);
         }
 
         return res.render(view);
