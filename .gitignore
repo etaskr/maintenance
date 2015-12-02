@@ -2,3 +2,5 @@
 node_modules
 coverage.html
 *.log
+*.iml
+.idea
